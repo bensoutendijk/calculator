@@ -113,47 +113,26 @@ public class Calculator extends Application {
     }
     
     public EventHandler<ActionEvent> handleInt(String s) {
-        if (tryParseInt(s)){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+        EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+            if (this.input.equals("") || this.input.charAt(this.input.length() - 1) != ')')
                 this.input += s;
-                System.out.println(this.input);
-                m.setText(this.input);
-            };
-            return handle;
-        } else {
-            System.out.println("Error: Called handleInt on non-Int");
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-//                this.input += s;
-                System.out.println(this.input);
-//                m.setText(this.input);
-            };
-            return handle;
-        } 
+            System.out.println(this.input);
+            m.setText(this.input);
+        };
+        return handle;
     }
     
     public EventHandler<ActionEvent> handleOp(String s) {
-        if (tryParseOp(s)){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                if (input.length() != 0){
-                    if (tryParseInt(Character.toString(this.input.charAt(this.input.length()-1)))){
-                        this.input += " " + s + " ";
-                        System.out.println(this.input);
-                        m.setText(this.input);
-                    } else {
-
-                    }
+        EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+            if (input.length() != 0){
+                if (tryParseInt(Character.toString(this.input.charAt(this.input.length()-1))) || this.input.charAt(this.input.length() - 1) == ')'){
+                    this.input += " " + s + " ";
+                    System.out.println(this.input);
+                    m.setText(this.input);
                 }
-            };
-            return handle;
-        } else {
-            System.out.println("Error: Called handleOp on non-op label");
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-//                this.input += s;
-                System.out.println("Button onAction undefined");
-//                m.setText(this.input);
-            };
-            return handle;
-        } 
+            }
+        };
+        return handle;
     }
     
     public double solve(String equation){
@@ -203,8 +182,10 @@ public class Calculator extends Application {
     
     public double operate(String equation){
         double value = 0;
+        double x;
+        double y;
         for (int i = 0; i < equation.length(); i++){
-            
+            System.out.print("'" + equation.substring(i, i+1) + "'");
         }
         return value;
     }
@@ -234,14 +215,13 @@ public class Calculator extends Application {
                 } else if (this.input.length() == 1) {
                     this.input = "";
                     m.setText(this.input);
-                } else if (this.input.length() == 0) {
-//                    do nothing
                 }
             };
             return handle;
-            
+        } 
+        
 //        Decimal point action
-        } else if (s.equals(".")){
+        if (s.equals(".")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
                 if (this.input.length() > 0 && !rightOfDecimal(currentNumber(this.input))){
                     if (tryParseInt(Character.toString(this.input.charAt(this.input.length()-1)))){
@@ -255,16 +235,20 @@ public class Calculator extends Application {
             };
             return handle;
             
+        }
+        
 //        Clear action: clears the entire input
-        } else if (s.equals("C")){
+        if (s.equals("C")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
                 this.input = "";
                 m.setText(this.input); 
             };
             return handle;
             
-//        Clear Entry action: clears only the current number
-        } else if (s.equals("CE")){
+        }
+        
+//        Clear Entry action: clears only the current number        
+        if (s.equals("CE")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
                 for (int i = currentNumber(this.input).length(); i > 0 ; i--) {
                     this.input = new StringBuilder(this.input).deleteCharAt(this.input.length() - 1).toString();
@@ -273,8 +257,10 @@ public class Calculator extends Application {
             };
             return handle;
             
+        }
+        
 //        Sign Switch action: changes the sign of the current number
-        } else if (s.equals("±")) {
+        if (s.equals("±")) {
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
                 if (!currentNumber(this.input).equals("")){
                     String switchedNumber = currentNumber(this.input);
@@ -300,6 +286,37 @@ public class Calculator extends Application {
             
             return handle;
         }
+        
+        if (s.equals("(")){
+            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+                if (tryParseOp(Character.toString(this.input.charAt(this.input.length() - 2)))){
+                    this.input = this.input + s;
+                }
+                m.setText(this.input);
+            };
+            return handle;
+        }
+        
+        if (s.equals(")")){
+            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+                int open = 0, closed = 0;
+                String[] arr = new String[this.input.length()];
+                for (int i = 0; i < arr.length; i++){
+                    arr[i] = Character.toString(this.input.charAt(i));
+                    if (arr[i].equals("("))
+                        open++;
+                    else if (arr[i].equals(")"))
+                        closed++;
+                }
+//                System.out.println("open: " + open + "\nclosed: " + closed);
+                if (open > closed && tryParseInt(Character.toString(this.input.charAt(this.input.length() - 1)))){
+                    this.input = this.input + s;
+                }
+                m.setText(this.input); 
+            };
+            return handle;
+        }
+        
         else {
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
 //                this.input += s;
@@ -338,7 +355,7 @@ public class Calculator extends Application {
         }
         return false;
     }
-    
+
     String currentNumber(String input) {
         String res = "";
         if (input.length() == 0) return res;
@@ -365,7 +382,7 @@ public class Calculator extends Application {
         } else return Sign.POSITIVE;
     }
     
-    Operation getOperation(String s){
+    Operation parseOperation(String s){
         if (s.equals("+")){
             return Operation.ADD;
         } else if (s.equals("−")){

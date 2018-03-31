@@ -5,24 +5,25 @@
  */
 package calculator;
 
-import static calculator.Calculator.m;
+import java.util.ArrayList;
 
 /**
  *
  * @author bensoutendijk
  */
+
 public class Equation {
-    StringBuilder equation = new StringBuilder("");
-    private double x, y, res;
-    private int level, depth;
+    
+    private StringBuilder equation = new StringBuilder("");
     
     public Equation (){
 //        no arg constructor
     }
+    public Equation (String s){
+//        no arg constructor
+    }
     
     public Equation (double x, String op, double y){
-        this.x = x;
-        this.y = y;
         this.pushNumeral(Double.toString(x));
         this.pushOperation(op);
         this.pushNumeral(Double.toString(y));
@@ -51,10 +52,12 @@ public class Equation {
         equation.append(s);
     }
     public void openBrace(){
-        if (tryParseOp(equation.charAt(equation.length() - 2)))
+        if (equation.length() == 0){
             equation.append("(");
-//        else if (tryParseInt(equation.charAt(equation.length() - 1)))
-//            equation.append("(");
+        }
+        else if (tryParseInt(equation.charAt(equation.length() - 1))){
+            equation.append("(");
+        }
     }
     public void closeBrace(){
         int open = 0, closed = 0;
@@ -66,8 +69,12 @@ public class Equation {
             else if (arr[i].equals(")"))
                 closed++;
         }
-        if (open > closed && tryParseInt(Character.toString(equation.charAt(equation.length() - 1)))){
-            equation.append(")");
+        if (equation.length() > 0){
+            if (open > closed){
+                if (tryParseInt(Character.toString(equation.charAt(equation.length() - 1)))) {
+                    equation.append(")");
+                }
+            }
         }
     }
     public void pushDecimal(){
@@ -109,54 +116,7 @@ public class Equation {
             }
         }
     }
-    
-    public void solve(){
-        int left = 0, right = 0;
-        String s;
-        for (int i = 0; i < equation.length(); i++){
-            if (tryParseInt(equation.charAt(i))){
-                left = i;
-                break;
-            }
-        }
-        for (int i = left; i < equation.length(); i++){
-            if (equation.charAt(i) == ' '){
-                right = i;
-                break;
-            }
-        }
-        s = equation.substring(left, right);
-        x = Double.parseDouble(s);
-        
-        for (int i = right; i < equation.length(); i++){
-            if (tryParseInt(equation.charAt(i))){
-                left = i;
-                break;
-            }
-        }
-        for (int i = left; i < equation.length(); i++){
-            if (tryParseInt(equation.charAt(i))){
-                right = i + 1;
-            }
-        }
-        s = equation.substring(left, right);
-        y = Double.parseDouble(s);
-        
-        equation = new StringBuilder(Double.toString(operate(parseOp(equation.charAt(equation.length() - 3)))));
-    }
 
-    private double operate(Calculator.Operation op){
-        if (op == Calculator.Operation.ADD)
-            return x + y;
-        if (op == Calculator.Operation.SUBTRACT)
-            return x - y;
-        if (op == Calculator.Operation.MULTIPLY)
-            return x * y;
-        if (op == Calculator.Operation.DIVIDE)
-            return x / y;
-        else return 0;
-    }
-    
     private String currentNumber() {
         String res = "";
         if (equation.length() == 0) return res;
@@ -181,18 +141,6 @@ public class Equation {
             return Calculator.Sign.NEGATIVE;
         } else return Calculator.Sign.POSITIVE;
     }
-    private Calculator.Operation parseOp(char c){
-        if (c == '+'){
-            return Calculator.Operation.ADD;
-        } else if (c == '−'){
-            return Calculator.Operation.SUBTRACT;
-        } else if (c == '×'){
-            return Calculator.Operation.MULTIPLY;
-        } else if (c == '÷'){
-            return Calculator.Operation.DIVIDE;
-        } else return Calculator.Operation.ADD;
-    }
-
     boolean tryParseInt(String s) {  
        try {  
             Integer.parseInt(s);  

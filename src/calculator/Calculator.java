@@ -5,6 +5,7 @@
  */
 package calculator;
 
+import java.util.ArrayList;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -25,7 +26,7 @@ public class Calculator extends Application {
     
     enum Sign {POSITIVE, NEGATIVE};
     enum Operation {ADD, SUBTRACT, MULTIPLY, DIVIDE};
-    
+   
     public static final double MIN_HEIGHT = 525;
     public static final double MIN_WIDTH = 350;
     
@@ -35,7 +36,7 @@ public class Calculator extends Application {
         {"Lsh", "Rsh", "Or", "Xor", "Not", "And"},
            {"↑", "Mod", "CE", "C", "⌫", "÷"},
              {"A", "B", "7", "8", "9", "×"},     
-             {"C", "D", "4", "5", "6", "−"},
+             {"C", "D", "4", "5", "6", "-"},
              {"E", "F", "1", "2", "3", "+"}, 
              {"(", ")", "±", "0", ".", "="}
     };
@@ -130,7 +131,7 @@ public class Calculator extends Application {
 //        Equals action
         if (s.equals("=")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.solve();
+                solve(equation);
                 input = equation.toString();
                 m.setText(input);
             };
@@ -224,12 +225,121 @@ public class Calculator extends Application {
             return false;  
         }
     }
+    boolean tryParseInt(char c) {  
+       try {  
+            Integer.parseInt(Character.toString(c));
+            return true;
+        } catch (NumberFormatException e) {  
+            return false;  
+        }
+    }
     boolean tryParseOp(String s) {
-        String[] operators = {"+", "−", "×", "÷"};
+        String[] operators = {"+", "-", "×", "÷"};
         for (String op : operators) {
             if (s.equals(op)) 
                 return true;
         }
         return false;
+    }
+    boolean tryParseOp(char c) {
+        char[] operators = {'+', '-', '×', '÷'};
+        for (char op  : operators) {
+            if (c == op) 
+                return true;
+        }
+        return false;
+    }private Operation parseOp(char c){
+        if (c == '+'){
+            return Operation.ADD;
+        } else if (c == '-'){
+            return Operation.SUBTRACT;
+        } else if (c == '×'){
+            return Operation.MULTIPLY;
+        } else if (c == '÷'){
+            return Operation.DIVIDE;
+        } else 
+            return Operation.ADD;
+    }
+    private Operation parseOp(String s){
+        if (s.isEmpty()) System.out.println("parseOp: String was empty");
+        char[] arr = s.toCharArray();
+        for (char c : arr){
+            if (c == '+'){
+                return Operation.ADD;
+            } else if (c == '-'){
+                return Operation.SUBTRACT;
+            } else if (c == '×'){
+                return Operation.MULTIPLY;
+            } else if (c == '÷'){
+                return Operation.DIVIDE;
+            }
+        }
+        return Operation.ADD;
+    }
+    private double solve(Equation equation){
+        Equation fx, gx;
+        Operation op;
+        int numberOfOperations = 0;
+        int open = 0, closed = 0;
+        String s = equation.toString();
+        ArrayList<Operation> operations = new ArrayList<Operation>();
+        if (tryParseInt(s))
+//            Base case
+            return Double.parseDouble(s);
+        else {
+//            find all operations
+            for (char c: s.toCharArray()){
+                if (tryParseOp(c)){
+                    operations.add(parseOp(c));
+                }
+            }
+//            Sort the array of operators by precedence (i.e. P.E.M.D.A.S.) and choose the lowest
+            System.out.println(operations.toString());
+            quickSort(operations,0,operations.size()-1);
+            System.out.println(operations.toString());
+            //operate(fx, op, gx);
+        }
+        return 0.0;
+    }
+    
+    private double operate(Equation x, Operation op, Equation y){
+        System.out.println(x +" "+ op +" "+ y);
+        if (op == Operation.ADD)
+            return x + y;
+        if (op == Operation.SUBTRACT)
+            return x - y;
+        if (op == Operation.MULTIPLY)
+            return x * y;
+        if (op == Operation.DIVIDE)
+            return x / y;
+        else return 0;
+    }
+    
+    public static void quickSort (ArrayList<Operation> arr, int left, int right){
+        int index = partition(arr, left, right);
+        if (left < index - 1)
+            quickSort(arr, left, index - 1);
+        if (index < right)
+            quickSort(arr, index, right);
+    }
+    public static int partition (ArrayList<Operation> arr, int left, int right){
+        int i = left, j = right;
+        Operation tmp;
+        Operation pivot = arr.get((left + right) / 2);
+
+        while (i <= j) {
+            while (arr.get(i).compareTo(pivot) > 0)
+                i++;
+            while (arr.get(j).compareTo(pivot) < 0)
+                j--;
+            if (i <= j) {
+                tmp = arr.get(i);
+                arr.set(i, arr.get(j));
+                arr.set(j, tmp);
+                i++;
+                j--;
+            }
+        };
+        return i;
     }
 }

@@ -42,7 +42,7 @@ public class Calculator extends Application {
     };
     
     public String input = "";
-    public Equation equation = new Equation();
+    public ArithmeticExpression expression = new ArithmeticExpression();
     public String output = "";
     
     
@@ -111,8 +111,8 @@ public class Calculator extends Application {
 //        Numeric key action
         if (tryParseInt(s)) {
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.pushNumeral(s);
-                input = equation.toString();
+                expression.pushNumeral(s);
+                input = expression.toString();
                 m.setText(input);
             };
             return handle;
@@ -121,8 +121,8 @@ public class Calculator extends Application {
 //        Operator key action
         if (tryParseOp(s)) {
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.pushOperation(s);
-                input = equation.toString();
+                expression.pushOperation(s);
+                input = expression.toString();
                 m.setText(input);
             };
             return handle;
@@ -131,8 +131,8 @@ public class Calculator extends Application {
 //        Equals action
         if (s.equals("=")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                solve(equation);
-                input = equation.toString();
+                solve(expression);
+                input = expression.toString();
                 m.setText(input);
             };
             
@@ -142,8 +142,8 @@ public class Calculator extends Application {
 //        Backspace action
         if (s.equals("⌫")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.backspace();
-                input = equation.toString();
+                expression.backspace();
+                input = expression.toString();
                 m.setText(input);
             };
             return handle;
@@ -152,8 +152,8 @@ public class Calculator extends Application {
 //        Decimal point action
         if (s.equals(".")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.pushDecimal();
-                input = equation.toString();
+                expression.pushDecimal();
+                input = expression.toString();
                 m.setText(input);
             };
             return handle;
@@ -163,8 +163,8 @@ public class Calculator extends Application {
 //        Clear action: clears the entire input
         if (s.equals("C")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.clear();
-                input = equation.toString();
+                expression.clear();
+                input = expression.toString();
                 m.setText(input); 
             };
             return handle;
@@ -174,8 +174,8 @@ public class Calculator extends Application {
 //        Clear Entry action: clears only the current number        
         if (s.equals("CE")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.clearEntry();
-                input = equation.toString();
+                expression.clearEntry();
+                input = expression.toString();
                 m.setText(input);
             };
             return handle;
@@ -185,8 +185,8 @@ public class Calculator extends Application {
 //        Sign Switch action: changes the sign of the current number
         if (s.equals("±")) {
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.switchSign();
-                input = equation.toString();
+                expression.switchSign();
+                input = expression.toString();
                 m.setText(input);
             };          
             return handle;
@@ -194,8 +194,8 @@ public class Calculator extends Application {
         
         if (s.equals("(")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.openBrace();
-                input = equation.toString();
+                expression.openBrace();
+                input = expression.toString();
                 m.setText(input);
             };
             return handle;
@@ -203,8 +203,8 @@ public class Calculator extends Application {
         
         if (s.equals(")")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                equation.closeBrace();
-                input = equation.toString();
+                expression.closeBrace();
+                input = expression.toString();
                 m.setText(input);
             };
             return handle;
@@ -217,7 +217,7 @@ public class Calculator extends Application {
         } 
     }
     
-    boolean tryParseInt(String s) {  
+    static boolean tryParseInt(String s) {  
        try {  
             Integer.parseInt(s);  
             return true;  
@@ -225,7 +225,7 @@ public class Calculator extends Application {
             return false;  
         }
     }
-    boolean tryParseInt(char c) {  
+    static boolean tryParseInt(char c) {  
        try {  
             Integer.parseInt(Character.toString(c));
             return true;
@@ -233,7 +233,8 @@ public class Calculator extends Application {
             return false;  
         }
     }
-    boolean tryParseOp(String s) {
+    
+    static boolean tryParseOp(String s) {
         String[] operators = {"+", "-", "×", "÷"};
         for (String op : operators) {
             if (s.equals(op)) 
@@ -241,14 +242,15 @@ public class Calculator extends Application {
         }
         return false;
     }
-    boolean tryParseOp(char c) {
+    static boolean tryParseOp(char c) {
         char[] operators = {'+', '-', '×', '÷'};
         for (char op  : operators) {
             if (c == op) 
                 return true;
         }
         return false;
-    }private Operation parseOp(char c){
+    }
+    static Operation parseOp(char c){
         if (c == '+'){
             return Operation.ADD;
         } else if (c == '-'){
@@ -260,8 +262,7 @@ public class Calculator extends Application {
         } else 
             return Operation.ADD;
     }
-    private Operation parseOp(String s){
-        if (s.isEmpty()) System.out.println("parseOp: String was empty");
+    static Operation parseOp(String s){
         char[] arr = s.toCharArray();
         for (char c : arr){
             if (c == '+'){
@@ -276,17 +277,16 @@ public class Calculator extends Application {
         }
         return Operation.ADD;
     }
-    private double solve(Equation equation){
-        Equation fx, gx;
+    
+    private double solve(ArithmeticExpression expression){
+        ArithmeticExpression fx, gx;
         Operation op;
-        int numberOfOperations = 0;
-        int open = 0, closed = 0;
-        String s = equation.toString();
+        String s = expression.toString();
         ArrayList<Operation> operations = new ArrayList<Operation>();
-        if (tryParseInt(s))
+        if (tryParseInt(s)){
 //            Base case
             return Double.parseDouble(s);
-        else {
+        } else {
 //            find all operations
             for (char c: s.toCharArray()){
                 if (tryParseOp(c)){
@@ -297,12 +297,14 @@ public class Calculator extends Application {
             System.out.println(operations.toString());
             quickSort(operations,0,operations.size()-1);
             System.out.println(operations.toString());
-            //operate(fx, op, gx);
+            
         }
-        return 0.0;
+        fx = new ArithmeticExpression("1");
+        gx = new ArithmeticExpression("2");
+        op = Operation.ADD;
+        return operate(solve(fx), op, solve(gx));
     }
-    
-    private double operate(Equation x, Operation op, Equation y){
+    private double operate(double x, Operation op, double y){
         System.out.println(x +" "+ op +" "+ y);
         if (op == Operation.ADD)
             return x + y;

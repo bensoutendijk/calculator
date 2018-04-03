@@ -12,26 +12,20 @@ import java.util.ArrayList;
  * @author bensoutendijk
  */
 
-public class Equation {
+public class ArithmeticExpression {
     
     private StringBuilder equation = new StringBuilder("");
     
-    public Equation (){
+    public ArithmeticExpression (){
 //        no arg constructor
     }
-    public Equation (String s){
-//        no arg constructor
-    }
-    
-    public Equation (double x, String op, double y){
-        this.pushNumeral(Double.toString(x));
-        this.pushOperation(op);
-        this.pushNumeral(Double.toString(y));
+    public ArithmeticExpression (String s){
+        this.equation = new StringBuilder(s);
     }
     
     public void pushOperation(String op){
         if (equation.length() != 0){
-            if (tryParseInt(Character.toString(equation.charAt(equation.length()-1)))){
+            if (Calculator.tryParseInt(Character.toString(equation.charAt(equation.length()-1)))){
                 equation.append(" " + op + " ");
             } else if (equation.charAt(equation.length() - 1) == ')') {
                 equation.append(" " + op + " ");
@@ -39,23 +33,13 @@ public class Equation {
         }
     }
     public void pushNumeral(String s){
-//        if (equation.length() == 0)
-//            equation.append(s);
-//        else if (equation.charAt(equation.length() - 1) == ')')
-//            equation.append(s);
-//        else if (equation.charAt(equation.length() - 1) == '(')
-//            equation.append(s);
-//        else if (tryParseInt(equation.charAt(equation.length() - 1)))
-//            equation.append(s);
-//        else if ((equation.charAt(equation.length() - 1)) == ' ')
-//            equation.append(s);
         equation.append(s);
     }
     public void openBrace(){
         if (equation.length() == 0){
             equation.append("(");
         }
-        else if (tryParseInt(equation.charAt(equation.length() - 1))){
+        else if (Calculator.tryParseInt(equation.charAt(equation.length() - 1))){
             equation.append("(");
         }
     }
@@ -71,7 +55,7 @@ public class Equation {
         }
         if (equation.length() > 0){
             if (open > closed){
-                if (tryParseInt(Character.toString(equation.charAt(equation.length() - 1)))) {
+                if (Calculator.tryParseInt(Character.toString(equation.charAt(equation.length() - 1)))) {
                     equation.append(")");
                 }
             }
@@ -79,7 +63,7 @@ public class Equation {
     }
     public void pushDecimal(){
         if (equation.length() > 0 && !currentNumber().contains(".")){
-            if (tryParseInt(equation.charAt(equation.length()-1))){
+            if (Calculator.tryParseInt(equation.charAt(equation.length()-1))){
                 equation.append(".");
             } 
         }
@@ -87,7 +71,7 @@ public class Equation {
     public void backspace(){
         if (equation.length() > 0){
             char c = equation.charAt(equation.length() - 2);
-            if (tryParseOp(c))
+            if (Calculator.tryParseOp(c))
                 for (int i = 0; i < 3; i++)
                     equation.deleteCharAt(equation.length() - 1);
             else 
@@ -127,7 +111,7 @@ public class Equation {
         }
         
         for (String s : arr) {
-            if (tryParseInt(s) || s.equals(".") || s.equals("-")) {
+            if (Calculator.tryParseInt(s) || s.equals(".") || s.equals("-")) {
                 res += s;
             } else if (s.equals(" ")) break;
         }
@@ -140,38 +124,6 @@ public class Equation {
         if (s.charAt(0) == '-') {
             return Calculator.Sign.NEGATIVE;
         } else return Calculator.Sign.POSITIVE;
-    }
-    boolean tryParseInt(String s) {  
-       try {  
-            Integer.parseInt(s);  
-            return true;  
-        } catch (NumberFormatException e) {  
-            return false;  
-        }
-    }
-    boolean tryParseInt(char c) {  
-       try {  
-            Integer.parseInt(Character.toString(c));
-            return true;
-        } catch (NumberFormatException e) {  
-            return false;  
-        }
-    }
-    boolean tryParseOp(String s) {
-        String[] operators = {"+", "−", "×", "÷"};
-        for (String op : operators) {
-            if (s.equals(op)) 
-                return true;
-        }
-        return false;
-    }
-    boolean tryParseOp(char c) {
-        char[] operators = {'+', '-', '×', '÷'};
-        for (char op  : operators) {
-            if (c == op) 
-                return true;
-        }
-        return false;
     }
     
     @Override 

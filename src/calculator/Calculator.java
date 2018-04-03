@@ -25,7 +25,18 @@ import javafx.stage.Stage;
 public class Calculator extends Application {
     
     enum Sign {POSITIVE, NEGATIVE};
-    enum Operation {ADD, SUBTRACT, MULTIPLY, DIVIDE};
+    enum Operation {
+        ADD, SUBTRACT, MULTIPLY, DIVIDE;
+        public String toString() {
+            switch(this) {
+              case ADD: return "+";
+              case SUBTRACT: return "−";
+              case MULTIPLY: return "×";
+              case DIVIDE: return "÷";
+              default: throw new IllegalArgumentException();
+            }
+        }
+    };
    
     public static final double MIN_HEIGHT = 525;
     public static final double MIN_WIDTH = 350;
@@ -36,7 +47,7 @@ public class Calculator extends Application {
         {"Lsh", "Rsh", "Or", "Xor", "Not", "And"},
            {"↑", "Mod", "CE", "C", "⌫", "÷"},
              {"A", "B", "7", "8", "9", "×"},     
-             {"C", "D", "4", "5", "6", "-"},
+             {"C", "D", "4", "5", "6", "−"},
              {"E", "F", "1", "2", "3", "+"}, 
              {"(", ")", "±", "0", ".", "="}
     };
@@ -131,7 +142,7 @@ public class Calculator extends Application {
 //        Equals action
         if (s.equals("=")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                solve(expression);
+                expression = new ArithmeticExpression(solve(expression));
                 input = expression.toString();
                 m.setText(input);
             };
@@ -233,9 +244,16 @@ public class Calculator extends Application {
             return false;  
         }
     }
-    
+    static boolean tryParseDouble(String s){
+        try {
+            Double.parseDouble(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
     static boolean tryParseOp(String s) {
-        String[] operators = {"+", "-", "×", "÷"};
+        String[] operators = {"+", "−", "×", "÷"};
         for (String op : operators) {
             if (s.equals(op)) 
                 return true;
@@ -243,7 +261,7 @@ public class Calculator extends Application {
         return false;
     }
     static boolean tryParseOp(char c) {
-        char[] operators = {'+', '-', '×', '÷'};
+        char[] operators = {'+', '−', '×', '÷'};
         for (char op  : operators) {
             if (c == op) 
                 return true;
@@ -253,7 +271,7 @@ public class Calculator extends Application {
     static Operation parseOp(char c){
         if (c == '+'){
             return Operation.ADD;
-        } else if (c == '-'){
+        } else if (c == '−'){
             return Operation.SUBTRACT;
         } else if (c == '×'){
             return Operation.MULTIPLY;
@@ -267,7 +285,7 @@ public class Calculator extends Application {
         for (char c : arr){
             if (c == '+'){
                 return Operation.ADD;
-            } else if (c == '-'){
+            } else if (c == '−'){
                 return Operation.SUBTRACT;
             } else if (c == '×'){
                 return Operation.MULTIPLY;
@@ -279,14 +297,14 @@ public class Calculator extends Application {
     }
     
     private double solve(ArithmeticExpression expression){
-        ArithmeticExpression fx, gx;
-        Operation op;
         String s = expression.toString();
-        ArrayList<Operation> operations = new ArrayList<Operation>();
-        if (tryParseInt(s)){
+        if (tryParseDouble(s)){
 //            Base case
             return Double.parseDouble(s);
         } else {
+            ArithmeticExpression fx, gx;
+            Operation op;
+            ArrayList<Operation> operations = new ArrayList<Operation>();
 //            find all operations
             for (char c: s.toCharArray()){
                 if (tryParseOp(c)){
@@ -294,16 +312,21 @@ public class Calculator extends Application {
                 }
             }
 //            Sort the array of operators by precedence (i.e. P.E.M.D.A.S.) and choose the lowest
-            System.out.println(operations.toString());
             quickSort(operations,0,operations.size()-1);
-            System.out.println(operations.toString());
+            op = operations.get(0);
+            System.out.println("Found op: " + op.toString());
             
+//            Everything before the operator
+            fx = new ArithmeticExpression(s.substring(0, s.indexOf(op.toString()) - 1));
+//            Everything after the operator
+            gx = new ArithmeticExpression(s.substring(s.indexOf(op.toString()) + 2));
+            
+            System.out.println("'" + fx.toString() + "'\n" + "'" + gx.toString() + "'");
+            
+            return operate(solve(fx), op, solve(gx));
         }
-        fx = new ArithmeticExpression("1");
-        gx = new ArithmeticExpression("2");
-        op = Operation.ADD;
-        return operate(solve(fx), op, solve(gx));
     }
+    
     private double operate(double x, Operation op, double y){
         System.out.println(x +" "+ op +" "+ y);
         if (op == Operation.ADD)
@@ -330,9 +353,9 @@ public class Calculator extends Application {
         Operation pivot = arr.get((left + right) / 2);
 
         while (i <= j) {
-            while (arr.get(i).compareTo(pivot) > 0)
+            while (arr.get(i).compareTo(pivot) < 0)
                 i++;
-            while (arr.get(j).compareTo(pivot) < 0)
+            while (arr.get(j).compareTo(pivot) > 0)
                 j--;
             if (i <= j) {
                 tmp = arr.get(i);

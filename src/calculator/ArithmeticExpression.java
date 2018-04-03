@@ -14,76 +14,79 @@ import java.util.ArrayList;
 
 public class ArithmeticExpression {
     
-    private StringBuilder equation = new StringBuilder("");
+    private StringBuilder expression = new StringBuilder("");
     
     public ArithmeticExpression (){
 //        no arg constructor
     }
     public ArithmeticExpression (String s){
-        this.equation = new StringBuilder(s);
+        this.expression = new StringBuilder(s);
+    }
+    public ArithmeticExpression (Double x){
+        this.expression = new StringBuilder(Double.toString(x));
     }
     
     public void pushOperation(String op){
-        if (equation.length() != 0){
-            if (Calculator.tryParseInt(Character.toString(equation.charAt(equation.length()-1)))){
-                equation.append(" " + op + " ");
-            } else if (equation.charAt(equation.length() - 1) == ')') {
-                equation.append(" " + op + " ");
+        if (expression.length() != 0){
+            if (Calculator.tryParseInt(Character.toString(expression.charAt(expression.length()-1)))){
+                expression.append(" " + op + " ");
+            } else if (expression.charAt(expression.length() - 1) == ')') {
+                expression.append(" " + op + " ");
             }
         }
     }
     public void pushNumeral(String s){
-        equation.append(s);
+        expression.append(s);
     }
     public void openBrace(){
-        if (equation.length() == 0){
-            equation.append("(");
+        if (expression.length() == 0){
+            expression.append("(");
         }
-        else if (Calculator.tryParseInt(equation.charAt(equation.length() - 1))){
-            equation.append("(");
+        else if (Calculator.tryParseInt(expression.charAt(expression.length() - 1))){
+            expression.append("(");
         }
     }
     public void closeBrace(){
         int open = 0, closed = 0;
-        String[] arr = new String[equation.length()];
+        String[] arr = new String[expression.length()];
         for (int i = 0; i < arr.length; i++){
-            arr[i] = Character.toString(equation.charAt(i));
+            arr[i] = Character.toString(expression.charAt(i));
             if (arr[i].equals("("))
                 open++;
             else if (arr[i].equals(")"))
                 closed++;
         }
-        if (equation.length() > 0){
+        if (expression.length() > 0){
             if (open > closed){
-                if (Calculator.tryParseInt(Character.toString(equation.charAt(equation.length() - 1)))) {
-                    equation.append(")");
+                if (Calculator.tryParseInt(Character.toString(expression.charAt(expression.length() - 1)))) {
+                    expression.append(")");
                 }
             }
         }
     }
     public void pushDecimal(){
-        if (equation.length() > 0 && !currentNumber().contains(".")){
-            if (Calculator.tryParseInt(equation.charAt(equation.length()-1))){
-                equation.append(".");
+        if (expression.length() > 0 && !currentNumber().contains(".")){
+            if (Calculator.tryParseInt(expression.charAt(expression.length()-1))){
+                expression.append(".");
             } 
         }
     }
     public void backspace(){
-        if (equation.length() > 0){
-            char c = equation.charAt(equation.length() - 2);
+        if (expression.length() > 0){
+            char c = expression.charAt(expression.length() - 2);
             if (Calculator.tryParseOp(c))
                 for (int i = 0; i < 3; i++)
-                    equation.deleteCharAt(equation.length() - 1);
+                    expression.deleteCharAt(expression.length() - 1);
             else 
-                equation.deleteCharAt(equation.length() - 1);
+                expression.deleteCharAt(expression.length() - 1);
         }
     }
     public void clear(){
-        this.equation.delete(0, equation.length());
+        this.expression.delete(0, expression.length());
     }
     public void clearEntry(){
         for (int i = currentNumber().length(); i > 0 ; i--) {
-            equation.deleteCharAt(equation.length() - 1);
+            expression.deleteCharAt(expression.length() - 1);
         }
     }
     public void switchSign(){
@@ -92,22 +95,22 @@ public class ArithmeticExpression {
             if (currentSign(currentNumber()) == Calculator.Sign.POSITIVE) {
                 switchedNumber = new StringBuilder(switchedNumber).insert(0, "-").toString();
                 this.clearEntry();
-                equation.append(switchedNumber);
+                expression.append(switchedNumber);
             } else {
                 switchedNumber = new StringBuilder(switchedNumber).deleteCharAt(0).toString();
                 this.clearEntry();
-                equation.append(switchedNumber);
+                expression.append(switchedNumber);
             }
         }
     }
 
     private String currentNumber() {
         String res = "";
-        if (equation.length() == 0) return res;
-        String[] arr = new String[equation.length()];
+        if (expression.length() == 0) return res;
+        String[] arr = new String[expression.length()];
         
-        for (int i = equation.length() - 1; i >= 0; i--) {
-            arr[equation.length() - i - 1] = Character.toString(equation.charAt(i));
+        for (int i = expression.length() - 1; i >= 0; i--) {
+            arr[expression.length() - i - 1] = Character.toString(expression.charAt(i));
         }
         
         for (String s : arr) {
@@ -129,8 +132,8 @@ public class ArithmeticExpression {
     @Override 
     public String toString(){
         String res = "";
-        for (int i = 0; i < equation.length(); i++){
-            res += equation.charAt(i);
+        for (int i = 0; i < expression.length(); i++){
+            res += expression.charAt(i);
         }
         return res;
     } 

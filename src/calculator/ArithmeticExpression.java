@@ -39,29 +39,21 @@ public class ArithmeticExpression {
         expression.append(s);
     }
     public void openBrace(){
-        if (expression.length() == 0){
-            expression.append("(");
-        }
-        else if (Calculator.tryParseInt(expression.charAt(expression.length() - 1))){
-            expression.append("(");
-        }
+        expression.append("(");
     }
     public void closeBrace(){
         int open = 0, closed = 0;
-        String[] arr = new String[expression.length()];
-        for (int i = 0; i < arr.length; i++){
-            arr[i] = Character.toString(expression.charAt(i));
-            if (arr[i].equals("("))
+        for (int i = 0; i < expression.length(); i++){
+            char c = expression.charAt(i);
+            if (c == '(')
                 open++;
-            else if (arr[i].equals(")"))
+            if (c == ')')
                 closed++;
         }
         if (expression.length() > 0){
-            if (open > closed){
-                if (Calculator.tryParseInt(Character.toString(expression.charAt(expression.length() - 1)))) {
-                    expression.append(")");
-                }
-            }
+            if (expression.charAt(expression.length() - 1) == ' ');
+            else if (open > closed)
+                expression.append(")");
         }
     }
     public void pushDecimal(){
@@ -129,6 +121,34 @@ public class ArithmeticExpression {
         } else return Calculator.Sign.POSITIVE;
     }
     
+    public void simplify() {
+        int open = 0, closed = 0;
+        for (int i = 0; i < expression.length(); i++){
+            char c = expression.charAt(i);
+            if (c == '('){
+                int j = Calculator.findClose(expression.substring(i));
+                if (i == 0 && j == expression.length()-1){
+                    expression = new StringBuilder(expression.substring(i+1,j));
+                    i = 0;
+                }
+                open++;
+                if (i > 0){
+                    if (Calculator.tryParseInt(expression.charAt(i-1))){
+                        expression.insert(i," " + "×" + " ");
+                    } else if (expression.charAt(i-1) == ')'){
+                        expression.insert(i," " + "×" + " ");
+                    }
+                }
+            }
+            if (c == ')'){
+                closed++;
+            }
+        }
+        for (; closed < open; closed++){
+            this.closeBrace();
+        }
+    }
+        
     @Override 
     public String toString(){
         String res = "";
@@ -136,6 +156,6 @@ public class ArithmeticExpression {
             res += expression.charAt(i);
         }
         return res;
-    } 
+    }
     
 }

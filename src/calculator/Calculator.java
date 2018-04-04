@@ -36,6 +36,15 @@ public class Calculator extends Application {
               default: throw new IllegalArgumentException();
             }
         }
+        public char toChar() {
+            switch(this) {
+              case ADD: return '+';
+              case SUBTRACT: return '−';
+              case MULTIPLY: return '×';
+              case DIVIDE: return '÷';
+              default: throw new IllegalArgumentException();
+            }
+        }
     };
    
     public static final double MIN_HEIGHT = 525;
@@ -297,38 +306,41 @@ public class Calculator extends Application {
     }
     
     private double solve(ArithmeticExpression expression){
+        expression.simplify();
         String s = expression.toString();
         if (tryParseDouble(s)){
-//            Base case
             return Double.parseDouble(s);
         } else {
-            ArithmeticExpression fx, gx;
-            Operation op;
             ArrayList<Operation> operations = new ArrayList<Operation>();
-//            find all operations
-            for (char c: s.toCharArray()){
+            for (int i = 0; i < s.length(); i++){
+                char c = s.charAt(i);
+                if (c == '('){
+                    int j = findClose(s.substring(i));
+                    i += j;
+                }
                 if (tryParseOp(c)){
                     operations.add(parseOp(c));
                 }
             }
-//            Sort the array of operators by precedence (i.e. P.E.M.D.A.S.) and choose the lowest
-            quickSort(operations,0,operations.size()-1);
-            op = operations.get(0);
-            System.out.println("Found op: " + op.toString());
-            
-//            Everything before the operator
-            fx = new ArithmeticExpression(s.substring(0, s.indexOf(op.toString()) - 1));
-//            Everything after the operator
-            gx = new ArithmeticExpression(s.substring(s.indexOf(op.toString()) + 2));
-            
-            System.out.println("'" + fx.toString() + "'\n" + "'" + gx.toString() + "'");
-            
+            quickSort(operations,0 ,operations.size()-1);
+            Operation op = operations.get(0);
+            ArithmeticExpression fx = null, gx = null;
+            for (int i = 0; i < s.length(); i++) {
+                char c = s.charAt(i);
+                if (c == '('){
+                    int j = findClose(s.substring(i));
+                    i += j;
+                }
+                if (c == operations.get(0).toChar()){
+                    fx = new ArithmeticExpression(s.substring(0, i-1));
+                    gx = new ArithmeticExpression(s.substring(i+2));
+                }
+            }
             return operate(solve(fx), op, solve(gx));
         }
     }
     
     private double operate(double x, Operation op, double y){
-        System.out.println(x +" "+ op +" "+ y);
         if (op == Operation.ADD)
             return x + y;
         if (op == Operation.SUBTRACT)
@@ -366,5 +378,19 @@ public class Calculator extends Application {
             }
         };
         return i;
+    }
+    public static int findClose(String s){
+        int open = 0, j = 0;
+        for (j = 0; j < s.length(); j++){
+            char c = s.charAt(j);
+            if (c == '(')
+                open++;
+            if (c == ')')
+                open--;
+            if (open == 0){
+                break;
+            }
+        }
+        return j;
     }
 }

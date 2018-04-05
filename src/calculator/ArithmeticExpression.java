@@ -22,16 +22,16 @@ public class ArithmeticExpression {
     public ArithmeticExpression (String s){
         this.expression = new StringBuilder(s);
     }
-    public ArithmeticExpression (Double x){
-        this.expression = new StringBuilder(Double.toString(x));
+    public ArithmeticExpression (int x){
+        this.expression = new StringBuilder(Integer.toString(x));
     }
     
-    public void pushOperation(String op){
+    public void pushOperation(Calculator.Operation op){
         if (expression.length() != 0){
-            if (Calculator.tryParseInt(Character.toString(expression.charAt(expression.length()-1)))){
-                expression.append(" " + op + " ");
+            if (Calculator.tryParseInt(expression.charAt(expression.length()-1))){
+                expression.append(" " + op.toChar() + " ");
             } else if (expression.charAt(expression.length() - 1) == ')') {
-                expression.append(" " + op + " ");
+                expression.append(" " + op.toChar() + " ");
             }
         }
     }
@@ -56,13 +56,6 @@ public class ArithmeticExpression {
                 expression.append(")");
         }
     }
-    public void pushDecimal(){
-        if (expression.length() > 0 && !currentNumber().contains(".")){
-            if (Calculator.tryParseInt(expression.charAt(expression.length()-1))){
-                expression.append(".");
-            } 
-        }
-    }
     public void backspace(){
         if (expression.length() > 0){
             char c = expression.charAt(expression.length() - 2);
@@ -77,48 +70,36 @@ public class ArithmeticExpression {
         this.expression.delete(0, expression.length());
     }
     public void clearEntry(){
-        for (int i = currentNumber().length(); i > 0 ; i--) {
+        for (int i = currentNumber(expression).length(); i > 0 ; i--) {
             expression.deleteCharAt(expression.length() - 1);
         }
     }
     public void switchSign(){
-        if (!currentNumber().equals("")){
-            String switchedNumber = currentNumber();
-            if (currentSign(currentNumber()) == Calculator.Sign.POSITIVE) {
-                switchedNumber = new StringBuilder(switchedNumber).insert(0, "-").toString();
+        String s = currentNumber(expression);
+        if (!s.equals("")){
+            if (s.charAt(0) != '-') {
+                s = new StringBuilder(s).insert(0, "-").toString();
                 this.clearEntry();
-                expression.append(switchedNumber);
+                expression.append(s);
             } else {
-                switchedNumber = new StringBuilder(switchedNumber).deleteCharAt(0).toString();
+                s = new StringBuilder(s).deleteCharAt(0).toString();
                 this.clearEntry();
-                expression.append(switchedNumber);
+                expression.append(s);
             }
         }
     }
 
-    private String currentNumber() {
+    private String currentNumber(StringBuilder expression ) {
         String res = "";
         if (expression.length() == 0) return res;
-        String[] arr = new String[expression.length()];
+        String s = new StringBuilder(expression).reverse().toString();
         
-        for (int i = expression.length() - 1; i >= 0; i--) {
-            arr[expression.length() - i - 1] = Character.toString(expression.charAt(i));
+        for (char c : s.toCharArray()) {
+            if (c == ' ') break;
+            res = res + c;
         }
         
-        for (String s : arr) {
-            if (Calculator.tryParseInt(s) || s.equals(".") || s.equals("-")) {
-                res += s;
-            } else if (s.equals(" ")) break;
-        }
-        
-        res = new StringBuilder(res).reverse().toString();
-        
-        return res;
-    }
-    private Calculator.Sign currentSign(String s){
-        if (s.charAt(0) == '-') {
-            return Calculator.Sign.NEGATIVE;
-        } else return Calculator.Sign.POSITIVE;
+        return new StringBuilder(res).reverse().toString();
     }
     
     public void simplify() {
@@ -141,8 +122,15 @@ public class ArithmeticExpression {
                 }
             }
             if (c == ')'){
+                if (i < expression.length()-1){
+                    if (Calculator.tryParseInt(expression.charAt(i+1)))
+                        expression.insert(i+1," " + "×" + " ");
+                }
                 closed++;
             }
+        }
+        if (expression.charAt(expression.length()-1) == ' '){
+            expression.append(currentNumber(expression.delete(expression.length()-3, expression.length()-1)));
         }
         for (; closed < open; closed++){
             this.closeBrace();

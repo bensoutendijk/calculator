@@ -24,15 +24,19 @@ import javafx.stage.Stage;
  */
 public class Calculator extends Application {
     
-    enum Sign {POSITIVE, NEGATIVE};
-    enum Operation {
-        ADD, SUBTRACT, MULTIPLY, DIVIDE;
+    public enum Operation {
+        ADD, SUBTRACT, MULTIPLY, MOD, DIVIDE, OR, XOR, NOT, AND;
         public String toString() {
             switch(this) {
               case ADD: return "+";
               case SUBTRACT: return "−";
               case MULTIPLY: return "×";
               case DIVIDE: return "÷";
+              case MOD: return "Mod";
+              case OR: return "Or";
+              case XOR: return "Xor";
+              case NOT: return "Not";
+              case AND: return "And";
               default: throw new IllegalArgumentException();
             }
         }
@@ -42,6 +46,25 @@ public class Calculator extends Application {
               case SUBTRACT: return '−';
               case MULTIPLY: return '×';
               case DIVIDE: return '÷';
+              case MOD: return '%';
+              case OR: return '‖';
+              case XOR: return '^';
+              case NOT: return '¬';
+              case AND: return '&';
+              default: throw new IllegalArgumentException();
+            }
+        }
+        public int operate(int x, int y){
+            switch(this) {
+              case ADD: return x+y;
+              case SUBTRACT: return x-y;
+              case MULTIPLY: return x*y;
+              case DIVIDE: return x/y;
+              case MOD: return x%y;
+              case OR: return x | y;
+              case XOR: return x^y;
+              case NOT: return '¬';
+              case AND: return x&y;
               default: throw new IllegalArgumentException();
             }
         }
@@ -141,7 +164,7 @@ public class Calculator extends Application {
 //        Operator key action
         if (tryParseOp(s)) {
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                expression.pushOperation(s);
+                expression.pushOperation(parseOp(s));
                 input = expression.toString();
                 m.setText(input);
             };
@@ -172,7 +195,7 @@ public class Calculator extends Application {
 //        Decimal point action
         if (s.equals(".")){
             EventHandler<ActionEvent> handle = (ActionEvent e) -> {
-                expression.pushDecimal();
+//                disabled in programming mode
                 input = expression.toString();
                 m.setText(input);
             };
@@ -253,75 +276,91 @@ public class Calculator extends Application {
             return false;  
         }
     }
-    static boolean tryParseDouble(String s){
-        try {
-            Double.parseDouble(s);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
     static boolean tryParseOp(String s) {
-        String[] operators = {"+", "−", "×", "÷"};
-        for (String op : operators) {
-            if (s.equals(op)) 
+        for (Operation o: Operation.values()){
+            if (s.equals(o.toString())){
                 return true;
+            }
+        }
+        for (Operation o: Operation.values()){
+            char op = o.toChar();
+            for (char c: s.toCharArray()){
+                if (c == op){
+                    return true;
+                }
+            }
         }
         return false;
     }
     static boolean tryParseOp(char c) {
-        char[] operators = {'+', '−', '×', '÷'};
-        for (char op  : operators) {
-            if (c == op) 
+        for (Operation o: Operation.values()){
+            char op = o.toChar();
+            if (c == op){
                 return true;
+            }
         }
         return false;
     }
     static Operation parseOp(char c){
-        if (c == '+'){
-            return Operation.ADD;
-        } else if (c == '−'){
-            return Operation.SUBTRACT;
-        } else if (c == '×'){
-            return Operation.MULTIPLY;
-        } else if (c == '÷'){
-            return Operation.DIVIDE;
-        } else 
-            return Operation.ADD;
-    }
-    static Operation parseOp(String s){
-        char[] arr = s.toCharArray();
-        for (char c : arr){
-            if (c == '+'){
-                return Operation.ADD;
-            } else if (c == '−'){
-                return Operation.SUBTRACT;
-            } else if (c == '×'){
-                return Operation.MULTIPLY;
-            } else if (c == '÷'){
-                return Operation.DIVIDE;
+        for (Operation o: Operation.values()){
+            if (o.toChar() == c){
+                return o;
             }
         }
         return Operation.ADD;
     }
-    
-    private double solve(ArithmeticExpression expression){
-        expression.simplify();
-        String s = expression.toString();
-        if (tryParseDouble(s)){
-            return Double.parseDouble(s);
-        } else {
-            ArrayList<Operation> operations = new ArrayList<Operation>();
-            for (int i = 0; i < s.length(); i++){
-                char c = s.charAt(i);
-                if (c == '('){
-                    int j = findClose(s.substring(i));
-                    i += j;
-                }
-                if (tryParseOp(c)){
-                    operations.add(parseOp(c));
+    static Operation parseOp(String s){
+        for (Operation o: Operation.values()){
+            if (s.equals(o.toString())){
+                return o;
+            }
+        }
+        char[] arr = s.toCharArray();
+        for (char c : arr){
+            for (Operation o: Operation.values()){
+                if (o.toChar() == c){
+                    return o;
                 }
             }
+        }
+        return Operation.ADD;
+    }
+    private ArrayList<Operation> findOperations(String s){
+        ArrayList<Operation> operations = new ArrayList<Operation>();
+        for (int i = 0; i < s.length(); i++){
+            char c = s.charAt(i);
+            if (c == '('){
+                int j = findClose(s.substring(i));
+                i += j;
+            }
+            if (tryParseOp(c)){
+                operations.add(parseOp(c));
+            }
+        }
+        return operations;
+    }
+    public static int findClose(String s){
+        int open = 0, j = 0;
+        for (j = 0; j < s.length(); j++){
+            char c = s.charAt(j);
+            if (c == '(')
+                open++;
+            if (c == ')')
+                open--;
+            if (open == 0){
+                break;
+            }
+        }
+        return j;
+    }
+
+    private int solve(ArithmeticExpression expression){
+        expression.simplify();
+        String s = expression.toString();
+        if (tryParseInt(s)){
+            return Integer.parseInt(s);
+        } else {
+            ArrayList<Operation> operations = findOperations(s);
             quickSort(operations,0 ,operations.size()-1);
             Operation op = operations.get(0);
             ArithmeticExpression fx = null, gx = null;
@@ -331,35 +370,23 @@ public class Calculator extends Application {
                     int j = findClose(s.substring(i));
                     i += j;
                 }
-                if (c == operations.get(0).toChar()){
+                if (c == op.toChar()){
                     fx = new ArithmeticExpression(s.substring(0, i-1));
                     gx = new ArithmeticExpression(s.substring(i+2));
                 }
             }
-            return operate(solve(fx), op, solve(gx));
+            return op.operate(solve(fx), solve(gx));
         }
     }
     
-    private double operate(double x, Operation op, double y){
-        if (op == Operation.ADD)
-            return x + y;
-        if (op == Operation.SUBTRACT)
-            return x - y;
-        if (op == Operation.MULTIPLY)
-            return x * y;
-        if (op == Operation.DIVIDE)
-            return x / y;
-        else return 0;
-    }
-    
-    public static void quickSort (ArrayList<Operation> arr, int left, int right){
+    private static void quickSort (ArrayList<Operation> arr, int left, int right){
         int index = partition(arr, left, right);
         if (left < index - 1)
             quickSort(arr, left, index - 1);
         if (index < right)
             quickSort(arr, index, right);
     }
-    public static int partition (ArrayList<Operation> arr, int left, int right){
+    private static int partition (ArrayList<Operation> arr, int left, int right){
         int i = left, j = right;
         Operation tmp;
         Operation pivot = arr.get((left + right) / 2);
@@ -378,19 +405,5 @@ public class Calculator extends Application {
             }
         };
         return i;
-    }
-    public static int findClose(String s){
-        int open = 0, j = 0;
-        for (j = 0; j < s.length(); j++){
-            char c = s.charAt(j);
-            if (c == '(')
-                open++;
-            if (c == ')')
-                open--;
-            if (open == 0){
-                break;
-            }
-        }
-        return j;
     }
 }

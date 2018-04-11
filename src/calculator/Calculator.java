@@ -9,10 +9,13 @@ import java.util.ArrayList;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
@@ -24,8 +27,10 @@ import javafx.stage.Stage;
  */
 public class Calculator extends Application {
     
+    public ArithmeticExpression expression = new ArithmeticExpression();    
+    
     public enum Operation {
-        ADD, SUBTRACT, MULTIPLY, MOD, DIVIDE, OR, XOR, NOT, AND;
+        ADD, SUBTRACT, MULTIPLY, MOD, DIVIDE, OR, XOR, AND;
         public String toString() {
             switch(this) {
               case ADD: return "+";
@@ -35,7 +40,6 @@ public class Calculator extends Application {
               case MOD: return "Mod";
               case OR: return "Or";
               case XOR: return "Xor";
-              case NOT: return "Not";
               case AND: return "And";
               default: throw new IllegalArgumentException();
             }
@@ -49,7 +53,6 @@ public class Calculator extends Application {
               case MOD: return '%';
               case OR: return '‖';
               case XOR: return '^';
-              case NOT: return '¬';
               case AND: return '&';
               default: throw new IllegalArgumentException();
             }
@@ -61,203 +64,328 @@ public class Calculator extends Application {
               case MULTIPLY: return x*y;
               case DIVIDE: return x/y;
               case MOD: return x%y;
-              case OR: return x | y;
+              case OR: return x|y;
               case XOR: return x^y;
-              case NOT: return '¬';
               case AND: return x&y;
               default: throw new IllegalArgumentException();
             }
         }
     };
-   
+    
     public static final double MIN_HEIGHT = 525;
     public static final double MIN_WIDTH = 350;
     
-    public static Label m = new Label("");
+    public static GridPane container = new GridPane();
+    
+    public static GridPane keypad = new GridPane();
+    
+    public static GridPane monitor = new GridPane();
+    public static Label displayExpression = new Label();
+    public static Label displayCurrentNumber = new Label("0");
+    public static Label displayHex = new Label("0");
+    public static Label displayDec = new Label("0");
+    public static Label displayOct = new Label("0");
+    public static Label displayBin = new Label("0");
+    
+    public static Label[] integerDisplays = 
+        {displayCurrentNumber, displayHex, displayDec, displayOct, displayBin};
     
     String[][] labels = {
         {"Lsh", "Rsh", "Or", "Xor", "Not", "And"},
-           {"↑", "Mod", "CE", "C", "⌫", "÷"},
+           {"↑", "Mod", "CE", "Ｃ", "⌫", "÷"},
              {"A", "B", "7", "8", "9", "×"},     
              {"C", "D", "4", "5", "6", "−"},
              {"E", "F", "1", "2", "3", "+"}, 
              {"(", ")", "±", "0", ".", "="}
     };
-    
-    public String input = "";
-    public ArithmeticExpression expression = new ArithmeticExpression();
-    public String output = "";
-    
+    Button[][] buttons = new Button[labels.length][labels[0].length];
     
     @Override
     public void start(Stage primaryStage) {
-//        Stage settings
+//        Configure Stage
         primaryStage.setTitle("Calculator");
         primaryStage.setMinHeight(MIN_HEIGHT);
         primaryStage.setMinWidth(MIN_WIDTH);
-
-
-//        Three row structure
-        GridPane container = new GridPane();
-        container.setAlignment(Pos.CENTER);
-        ColumnConstraints column1 = new ColumnConstraints();
-        column1.setPercentWidth(100);
-        container.getColumnConstraints().add(column1);
-        RowConstraints[] rows = new RowConstraints[3];
-        for (int i = 0; i < rows.length; i++)
-            rows[i] = new RowConstraints();
-        rows[0].setPercentHeight(40);
-        rows[1].setPercentHeight(5);
-        rows[2].setPercentHeight(50);
-        container.getRowConstraints().addAll(rows);
-        container.setHgap(0);
         
-//        row 0: the monitor, outputs the calculations in hex, dec, oct, and bin
-
+//        Configure GridPane root container
+        container.setGridLinesVisible(true);
+        container.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        ColumnConstraints c1 = new ColumnConstraints();
+        c1.setPercentWidth(100);
+        container.getColumnConstraints().add(c1);
+//        Upper Half
+        RowConstraints r1 = new RowConstraints();
+        r1.setPercentHeight(100);
+        container.getRowConstraints().add(r1);
+//        Lower Half
+        RowConstraints r2 = new RowConstraints();
+        r2.setPercentHeight(100);
+        container.getRowConstraints().add(r2);
         
-        container.add(m, 0, 0);
+//        Configure Monitor        
+        displayExpression.setMaxWidth(Double.MAX_VALUE);
+        displayExpression.setAlignment(Pos.CENTER_RIGHT);
+        displayExpression.setPadding(new Insets(10,0,10,0));
+        displayCurrentNumber.setMaxWidth(Double.MAX_VALUE);
+        displayCurrentNumber.setAlignment(Pos.CENTER_RIGHT);
+        displayExpression.setPadding(new Insets(0,0,10,0));
+        displayCurrentNumber.setStyle("-fx-font: 24 arial;");
         
-//        row 1: contains misc buttons i.e. bit-toggler, bit measurement, and memory buttons
+        monitor.add(displayExpression, 1, 0, 2, 1);
+        monitor.add(displayCurrentNumber, 1, 1, 2, 1);
+        monitor.add(displayHex, 1, 2);
+        monitor.add(displayDec, 1, 3);
+        monitor.add(displayOct, 1, 4);
+        monitor.add(displayBin, 1, 5);
+        monitor.add(new Label("HEX"), 0, 2);
+        monitor.add(new Label("DEC"), 0, 3);
+        monitor.add(new Label("OCT"), 0, 4);
+        monitor.add(new Label("BIN"), 0, 5);
+        ColumnConstraints m1 = new ColumnConstraints();
+        m1.setPercentWidth(10);
+        monitor.getColumnConstraints().add(m1);
+        ColumnConstraints m2 = new ColumnConstraints();
+        m2.setPercentWidth(90);
+        monitor.getColumnConstraints().add(m2);
+        monitor.setAlignment(Pos.BOTTOM_RIGHT);
+                
+//        Configure keypad
+        keypad.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         
-//        row 2: the bottom row, keypadContainer contains all the buttons that create the calculation/function
-
-        GridPane keypad = new GridPane();
         for(int i = 0; i < labels.length; i++) {
+            ColumnConstraints c = new ColumnConstraints();
+            c.setPercentWidth(100);
+            keypad.getColumnConstraints().add(i,c);
+            RowConstraints r = new RowConstraints();
+            r.setPercentHeight(100);
+            keypad.getRowConstraints().add(i, r);
             for(int j = 0; j < labels[i].length; j++) {
                 String label = labels[i][j];
                 Button button = new Button(label);
-                button.setOnAction(handle(label));
+                button.setId(label);
+                button.setOnAction(handleActionEvent(button));
+                button.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+                buttons[i][j] = button;
                 keypad.add(button, j, i);
             }
         }
         
-        container.add(keypad, 0, 2);
-
-
 //        Scene initialization
+        container.add(monitor, 0, 0);
+        container.add(keypad, 0, 1);
+                
         Scene scene = new Scene(container, MIN_WIDTH, MIN_HEIGHT);
         primaryStage.setScene(scene);
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode().equals(KeyCode.MINUS))
+                handleKeyEvent("−");
+            if (e.getCode().equals(KeyCode.ENTER))
+                handleKeyEvent("=");
+            if (e.getCode().equals(KeyCode.DIGIT8) && e.isShiftDown())
+                handleKeyEvent("×");
+            if (e.getCode().equals(KeyCode.ASTERISK))
+                handleKeyEvent("×");
+            if (e.getCode().equals(KeyCode.SLASH))
+                handleKeyEvent("÷");
+            if (e.getCode().equals(KeyCode.BACK_SPACE))
+                handleKeyEvent("⌫");
+            if (e.getCode().equals(KeyCode.ESCAPE))
+                handleKeyEvent("CE");
+        });
+        scene.setOnKeyTyped(e -> {
+            handleKeyEvent(e.getCharacter());
+        });
         scene.getStylesheets().add
           (Calculator.class.getResource("Calculator.css").toExternalForm());
         primaryStage.show();
     }
 
-    /** 
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
         launch(args);
     }
     
-    public EventHandler<ActionEvent> handle(String s) {
-
+    public EventHandler<ActionEvent> handleActionEvent(Button b) {
+        String s = b.getText();
+        EventHandler<ActionEvent> handle;
 //        Numeric key action
         if (tryParseInt(s)) {
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+            handle = (ActionEvent e) -> {
                 expression.pushNumeral(s);
-                input = expression.toString();
-                m.setText(input);
+                refresh(integerDisplays);
             };
-            return handle;
         }
         
 //        Operator key action
-        if (tryParseOp(s)) {
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+        else if (tryParseOp(s)) {
+            handle = (ActionEvent e) -> {
                 expression.pushOperation(parseOp(s));
-                input = expression.toString();
-                m.setText(input);
+                refresh(displayExpression);
             };
-            return handle;
         }
         
 //        Equals action
-        if (s.equals("=")){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+        else if (s.equals("=")){
+            handle = (ActionEvent e) -> {
                 expression = new ArithmeticExpression(solve(expression));
-                input = expression.toString();
-                m.setText(input);
+                refresh(integerDisplays);
+                expression = new ArithmeticExpression();
+                refresh(displayExpression);
             };
-            
-            return handle;
         }
         
 //        Backspace action
-        if (s.equals("⌫")){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+        else if (s.equals("⌫")){
+            handle = (ActionEvent e) -> {
                 expression.backspace();
-                input = expression.toString();
-                m.setText(input);
+                refresh(integerDisplays);
+                refresh(displayExpression);
             };
-            return handle;
         } 
         
-//        Decimal point action
-        if (s.equals(".")){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+//        Decimal point action ***DISABLED***
+        else if (s.equals(".")){
+            handle = (ActionEvent e) -> {
 //                disabled in programming mode
-                input = expression.toString();
-                m.setText(input);
             };
-            return handle;
-            
         }
         
 //        Clear action: clears the entire input
-        if (s.equals("C")){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+        else if (s.equals("Ｃ")){
+            handle = (ActionEvent e) -> {
                 expression.clear();
-                input = expression.toString();
-                m.setText(input); 
-            };
-            return handle;
-            
+                refresh(integerDisplays);
+                refresh(displayExpression);
+            };            
         }
         
 //        Clear Entry action: clears only the current number        
-        if (s.equals("CE")){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+        else if (s.equals("CE")){
+            handle = (ActionEvent e) -> {
                 expression.clearEntry();
-                input = expression.toString();
-                m.setText(input);
-            };
-            return handle;
-            
+                refresh(integerDisplays);
+            };            
         }
         
 //        Sign Switch action: changes the sign of the current number
-        if (s.equals("±")) {
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+        else if (s.equals("±")) {
+            handle = (ActionEvent e) -> {
                 expression.switchSign();
-                input = expression.toString();
-                m.setText(input);
+                refresh(integerDisplays);
             };          
-            return handle;
         }
         
-        if (s.equals("(")){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+//        Open Brace action
+        else if (s.equals("(")){
+            handle = (ActionEvent e) -> {
                 expression.openBrace();
-                input = expression.toString();
-                m.setText(input);
+                refresh(integerDisplays);
+                refresh(displayExpression);
             };
-            return handle;
         }
         
-        if (s.equals(")")){
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+//        Close brace action
+        else if (s.equals(")")){
+            handle = (ActionEvent e) -> {
                 expression.closeBrace();
-                input = expression.toString();
-                m.setText(input);
+                refresh(integerDisplays);
+                refresh(displayExpression);
             };
-            return handle;
         }
+        
+//        Not action
+        else if (s.equals("Not")){
+            handle = (ActionEvent e) -> {
+                expression.pushNot();
+                refresh(integerDisplays);
+                refresh(displayExpression);
+            };
+        }
+        
+//        Undefined Action
         else {
-            EventHandler<ActionEvent> handle = (ActionEvent e) -> {
+            handle = (ActionEvent e) -> {
                 System.out.println("'" + s + "' " + "Button onAction undefined");
             };
-            return handle;
+        }
+        return handle;
+    }
+    public void handleKeyEvent(String s) {
+//        Numeric key action
+        if (tryParseInt(s)) {
+            expression.pushNumeral(s);
+            refresh(integerDisplays);
+        }
+        
+//        Operator key action
+        else if (tryParseOp(s)) {
+            expression.pushOperation(parseOp(s));
+            refresh(displayExpression);
+        }
+        
+//        Equals action
+        else if (s.equals("=")){
+            expression = new ArithmeticExpression(solve(expression));
+            refresh(integerDisplays);
+            expression = new ArithmeticExpression();
+            refresh(displayExpression);
+        }
+        
+//        Backspace action
+        else if (s.equals("⌫")){
+            expression.backspace();
+            refresh(integerDisplays);
+            refresh(displayExpression);
         } 
+        
+//        Decimal point action ***DISABLED***
+        else if (s.equals(".")){
+//            disabled in programming mode
+        }
+        
+//        Clear action: clears the entire input
+        else if (s.equals("Ｃ")){
+            expression.clear();
+            refresh(integerDisplays);
+            refresh(displayExpression);
+        }
+        
+//        Clear Entry action: clears only the current number        
+        else if (s.equals("CE")){
+            expression.clearEntry();
+            refresh(integerDisplays);
+        }
+        
+//        Sign Switch action: changes the sign of the current number
+        else if (s.equals("±")) {
+            expression.switchSign();
+            refresh(integerDisplays);
+        }
+        
+//        Open Brace action
+        else if (s.equals("(")){
+            expression.openBrace();
+            refresh(integerDisplays);
+            refresh(displayExpression);
+        }
+        
+//        Close brace action
+        else if (s.equals(")")){
+            expression.closeBrace();
+            refresh(integerDisplays);
+            refresh(displayExpression);
+        }
+        
+//        Not action
+        else if (s.equals("Not")){
+            expression.pushNot();
+            refresh(integerDisplays);
+            refresh(displayExpression);
+        }
+        
+//        Undefined Action
+        else {
+            System.out.println("'" + s + "' " + "Button onAction undefined");
+        }
     }
     
     static boolean tryParseInt(String s) {  
@@ -325,6 +453,37 @@ public class Calculator extends Application {
         }
         return Operation.ADD;
     }
+    
+    private void refresh(Label... displays){
+        int i = 0;
+        String fullExpression = expression.toString();
+        String currentNumber = expression.currentNumber();
+        
+        if(tryParseInt(currentNumber)){
+            i = Integer.parseInt(currentNumber);
+        }
+        String hex = Integer.toHexString(i);
+        String dec = Integer.toString(i);
+        String oct = Integer.toOctalString(i);
+        String bin = Integer.toBinaryString(i);
+        
+        
+        for (Label l: displays){
+            if (l == displayHex)
+                l.setText(hex);
+            else if (l == displayDec)
+                l.setText(dec);
+            else if (l == displayOct)
+                l.setText(oct);
+            else if (l == displayBin)
+                l.setText(bin);
+            else if (l == displayCurrentNumber)
+                l.setText(currentNumber);
+            else if (l == displayExpression)
+                l.setText(fullExpression);
+        }
+    }
+    
     private ArrayList<Operation> findOperations(String s){
         ArrayList<Operation> operations = new ArrayList<Operation>();
         for (int i = 0; i < s.length(); i++){
@@ -390,7 +549,6 @@ public class Calculator extends Application {
         int i = left, j = right;
         Operation tmp;
         Operation pivot = arr.get((left + right) / 2);
-
         while (i <= j) {
             while (arr.get(i).compareTo(pivot) < 0)
                 i++;

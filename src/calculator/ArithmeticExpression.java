@@ -22,6 +22,7 @@ public class ArithmeticExpression {
     public ArithmeticExpression (String s){
         this.expression = new StringBuilder(s);
     }
+    
     public ArithmeticExpression (int x){
         this.expression = new StringBuilder(Integer.toString(x));
     }
@@ -35,12 +36,19 @@ public class ArithmeticExpression {
             }
         }
     }
+    
     public void pushNumeral(String s){
         expression.append(s);
     }
+    
+    public void pushNot(){
+        
+    }
+    
     public void openBrace(){
         expression.append("(");
     }
+    
     public void closeBrace(){
         int open = 0, closed = 0;
         for (int i = 0; i < expression.length(); i++){
@@ -56,6 +64,7 @@ public class ArithmeticExpression {
                 expression.append(")");
         }
     }
+    
     public void backspace(){
         if (expression.length() > 0){
             char c = expression.charAt(expression.length() - 2);
@@ -66,14 +75,17 @@ public class ArithmeticExpression {
                 expression.deleteCharAt(expression.length() - 1);
         }
     }
+    
     public void clear(){
         this.expression.delete(0, expression.length());
     }
+    
     public void clearEntry(){
         for (int i = currentNumber(expression).length(); i > 0 ; i--) {
             expression.deleteCharAt(expression.length() - 1);
         }
     }
+    
     public void switchSign(){
         String s = currentNumber(expression);
         if (!s.equals("")){
@@ -89,7 +101,19 @@ public class ArithmeticExpression {
         }
     }
 
-    private String currentNumber(StringBuilder expression ) {
+    public String currentNumber(StringBuilder expression) {
+        String res = "";
+        if (expression.length() == 0) return res;
+        String s = new StringBuilder(expression).reverse().toString();
+        
+        for (char c : s.toCharArray()) {
+            if (c == ' ') break;
+            res = res + c;
+        }
+        
+        return new StringBuilder(res).reverse().toString();
+    }
+    public String currentNumber() {
         String res = "";
         if (expression.length() == 0) return res;
         String s = new StringBuilder(expression).reverse().toString();
@@ -130,7 +154,7 @@ public class ArithmeticExpression {
             }
         }
         if (expression.charAt(expression.length()-1) == ' '){
-            expression.append(currentNumber(expression.delete(expression.length()-3, expression.length()-1)));
+//            Find last used current number
         }
         for (; closed < open; closed++){
             this.closeBrace();

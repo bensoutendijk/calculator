@@ -66,13 +66,15 @@ public class ArithmeticExpression {
     }
     
     public void backspace(){
-        if (expression.length() > 0){
+        if (expression.length() > 1){
             char c = expression.charAt(expression.length() - 2);
             if (Calculator.tryParseOp(c))
                 for (int i = 0; i < 3; i++)
                     expression.deleteCharAt(expression.length() - 1);
             else 
                 expression.deleteCharAt(expression.length() - 1);
+        } else {
+            expression = new StringBuilder();
         }
     }
     
